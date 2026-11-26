@@ -1,43 +1,35 @@
 {
   "scopeName": "source.oslang",
-  "name": "OSLANG 0.7",
-  "fileTypes": [".osl", ".oslang"],
+  "name": "OSLANG 0.8",
+  "fileTypes": [
+    ".osl"
+  ],
   "patterns": [
-    {
-      "include": "#comments"
-    },
-    {
-      "include": "#strings"
-    },
-    {
-      "include": "#numbers"
-    },
-    {
-      "include": "#types"
-    },
-    {
-      "include": "#keywords"
-    },
-    {
-      "include": "#operators"
-    },
-    {
-      "include": "#builtin-functions"
-    },
-    {
-      "include": "#identifiers"
-    }
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#datetimes" },
+    { "include": "#types" },
+    { "include": "#keywords" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#identifiers" }
   ],
   "repository": {
     "comments": {
       "patterns": [
         {
           "name": "comment.line.apostrophe.oslang",
-          "match": "'[^\\n]*$"
+          "match": "'[^\\n]*"
         },
         {
           "name": "comment.line.rem.oslang",
-          "match": "\\bREM\\b[^\\n]*$"
+          "match": "\\bREM\\b[^\\n]*"
+        },
+        {
+          "name": "comment.block.oslang",
+          "begin": "/\\*",
+          "end": "\\*/"
         }
       ]
     },
@@ -46,36 +38,15 @@
         {
           "name": "string.quoted.double.oslang",
           "begin": "\"",
-          "end": "\"",
+          "end": "\"(?!\")",
           "patterns": [
             {
               "name": "constant.character.escape.oslang",
-              "match": "\\\\."
+              "match": "\\\\([nt\\\\\"])"
             },
             {
-              "name": "string.interpolation.oslang",
-              "begin": "\\${",
-              "end": "}",
-              "patterns": [
-                {
-                  "include": "#keywords"
-                },
-                {
-                  "include": "#types"
-                },
-                {
-                  "include": "#numbers"
-                },
-                {
-                  "include": "#operators"
-                },
-                {
-                  "include": "#builtin-functions"
-                },
-                {
-                  "include": "#identifiers"
-                }
-              ]
+              "name": "constant.character.escape.oslang",
+              "match": "\"\""
             }
           ]
         }
@@ -85,31 +56,19 @@
       "patterns": [
         {
           "name": "constant.numeric.number.oslang",
-          "match": "\\b\\d+(\\.\\d+)?\\b"
+          "match": "\\b\\d+(?:\\.\\d+)?"
         }
       ]
     },
-    "keywords": {
+    "datetimes": {
       "patterns": [
         {
-          "name": "keyword.control.oslang",
-          "match": "(?i)\\b(AND|BREAK|CONTINUE|DO|ELIF|ELSE|END|FOR|IF|NOT|OR|RETURN|STEP|THEN|TO|WHILE|TRY|CATCH|SWITCH|CASE|DEFAULT|ON|RAISE)\\b"
+          "name": "constant.numeric.date.oslang",
+          "match": "#\\d{4}-\\d{2}-\\d{2}#"
         },
         {
-          "name": "keyword.declaration.oslang",
-          "match": "(?i)\\b(CONSTRUCTOR|FUNCTION|CLASS|INTERFACE|VAR|GLOBAL|USING|EVENT|ENUM)\\b"
-        },
-        {
-          "name": "keyword.other.oslang",
-          "match": "(?i)\\b(BASE|ME|NEW|PRINT|INPUT|CLEAR|CLS|VIRTUAL|OVERRIDE|KISS|TYPE|MATH|FILE|DIR|DATE|TIME|SHOW|MOD|TYPEOF|SQRT|POW|FLOOR|CEIL|COUNT|STR|BOOL|OSL|OSB|JSON|CSV|XML|CNF|NET|CONSOLE|APP)\\b"
-        },
-        {
-          "name": "storage.modifier.oslang",
-          "match": "(?i)\\b(PUBLIC|PRIVATE|PROTECTED|STATIC)\\b"
-        },
-        {
-          "name": "constant.language.oslang",
-          "match": "(?i)\\b(TRUE|FALSE|NULL)\\b"
+          "name": "constant.numeric.time.oslang",
+          "match": "#\\d{2}:\\d{2}:\\d{2}#"
         }
       ]
     },
@@ -117,35 +76,55 @@
       "patterns": [
         {
           "name": "storage.type.oslang",
-          "match": "(?i)\\b(NUMBER|STRING|BOOLEAN|ARRAY|NULL|OBJECT|DATE|TIME)\\b"
+          "match": "(?i)\\b(BOOLEAN|BOOL|NUMBER|STRING|OBJECT)\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.oslang",
+          "match": "(?i)\\b(AND|BREAK|CATCH|CONTINUE|DO|ELIF|ELSE|END|FOR|IF|NOT|OR|RETURN|STEP|THEN|TO|WHILE|TRY|SWITCH|CASE|DEFAULT|RAISE|ON)\\b"
+        },
+        {
+          "name": "keyword.declaration.oslang",
+          "match": "(?i)\\b(CONSTRUCTOR|FUNCTION|CLASS|INTERFACE|VAR|GLOBAL|USING|EVENT|ENUM)\\b"
+        },
+        {
+          "name": "storage.modifier.oslang",
+          "match": "(?i)\\b(PUBLIC|PRIVATE|PROTECTED|VIRTUAL|OVERRIDE)\\b"
+        },
+        {
+          "name": "keyword.other.oslang",
+          "match": "(?i)\\b(BASE|ME|NEW|PRINT|INPUT|CLEAR|SHOW|MATH|FILE|DIR|DATE|TIME|TYPEOF|STR|SQRT|POW|FLOOR|CEIL|COUNT|OSL|OSB|IN|EACH)\\b"
+        },
+        {
+          "name": "constant.language.oslang",
+          "match": "(?i)\\b(TRUE|FALSE|null)\\b"
         }
       ]
     },
     "operators": {
       "patterns": [
         {
+          "name": "keyword.operator.arrow.oslang",
+          "match": "=>|->"
+        },
+        {
           "name": "keyword.operator.arithmetic.oslang",
-          "match": "\\*\\*|\\+\\+|--|\\+=|=>|%|\\*|\\/"
+          "match": "\\+\\+|--|\\+=|\\*\\*|%|\\*|-|\\+|/|\\||\\bMOD\\b"
         },
         {
           "name": "keyword.operator.comparison.oslang",
-          "match": "=|<>|<|>|<=|>="
-        },
-        {
-          "name": "keyword.operator.logical.oslang",
-          "match": "\\bAND\\b|\\bOR\\b|\\bNOT\\b|\\bMOD\\b"
-        },
-        {
-          "name": "keyword.operator.arrow.oslang",
-          "match": "=>"
+          "match": "==|<>|<=|>=|<|>|="
         }
       ]
     },
-    "builtin-functions": {
+    "punctuation": {
       "patterns": [
         {
-          "name": "support.function.builtin.oslang",
-          "match": "(?i)\\b(SQRT|POW|FLOOR|CEIL|STR|NUMBER|BOOL|COUNT|TYPEOF|ABS|LENGTH|TOUPPER|TOLOWER|TRIM|SUBSTR|CONTAINS|REVERSE|NORMALIZE|SORT|JOIN|FIRST|LAST|INDEXOF|REMOVE|FLAT|PUSH|POP|FINDINDEX|REPEAT|PADSTART|PADEND|TRUNC|SIN|COS|TAN|PI|RANDOM|NOW|FORMAT|EXISTS|LIST|FILES|DIRS|CREATE|DELETE|CURRENT|NAME|VALUE|KEYS|GET|HAS|SETLANGUAGE|LANGUAGES|LANGUAGE|LOAD|LOADLANGUAGE|RELOAD|UNLOAD|DEFAULT|SETDEFAULT|SETFALLBACK|LEFT|RIGHT|FIND|INSERT|WIDTH|HEIGHT|SIZE|RESIZED|SETCURSOR|GETCURSOR|HIDECURSOR|SHOWCURSOR|CLEAR|CLEARLINE|CLEARAREA|WRITE|COLOR|RESETCOLOR|GETKEY|READKEY|KEYAVAILABLE|ENTER|EXIT|ALTERNATE|BEGINFRAME|ENDFRAME|FLUSH|BEEP)\\b"
+          "name": "punctuation.oslang",
+          "match": "\\(|\\)|\\[|\\]|\\{|\\}|,|:|\\."
         }
       ]
     },
@@ -153,7 +132,7 @@
       "patterns": [
         {
           "name": "variable.other.identifier.oslang",
-          "match": "\\b[A-Z_][A-Z0-9_]*\\b"
+          "match": "[A-Za-z_][A-Za-z0-9_]*"
         }
       ]
     }
