@@ -2,7 +2,7 @@
   "name": "oslang",
   "displayName": "OSLANG",
   "description": "Syntax highlighting, editor configuration, and language support for OSLANG 0.8, the scripting language of OSB. Visual Studio Code and VSCodium.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "osb-foundation",
   "engines": {
     "vscode": "^1.80.0"
