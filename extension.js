@@ -28,7 +28,7 @@ function activate(context) {
       for (const ci of ctxItems) {
         if (seen.has(ci.label.toUpperCase())) continue;
         seen.add(ci.label.toUpperCase());
-        merged.push({ label: ci.label, kind: ci.kind === 'function' ? 'function' : 'variable', detail: ci.detail, insertText: ci.label, snippet: false });
+        merged.push({ label: ci.label, kind: ci.kind === 'function' ? 'function' : 'variable', detail: ci.detail, insertText: ci.insertText || ci.label, snippet: !!ci.snippet });
       }
       return merged.map((it) => {
         const ci = new vscode.CompletionItem(it.label, mapKind(it.kind));

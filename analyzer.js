@@ -1,12 +1,9 @@
 'use strict';
 
+const data = require('./completion-data');
+
 const BLOCK_OPEN = new Set(['FUNCTION','SUB','CLASS','INTERFACE','IF','FOR','WHILE','DO','TRY','SWITCH','ENUM']);
 const BLOCK_CLOSE = new Set(['END','NEXT','LOOP','WEND']);
-
-const STRING_MEMBERS = ['TOUPPER','NORMALIZE','TOLOWER','TRIM','STARTSWITH','ENDSWITH','CONTAINS','INDEXOF','SUBSTR','REPLACE','SPLIT','COUNT','ISEMPTY','REVERSE','TOSTRING','PADSTART','PADEND','REPEAT','LEFT','RIGHT','FIND','INSERT','REMOVE'];
-const NUMBER_MEMBERS = ['TOSTRING','ABS','FLOOR','CEIL','ISINTEGER','BETWEEN','TRUNC'];
-const BOOLEAN_MEMBERS = ['TOSTRING','TOGGLE'];
-const ARRAY_MEMBERS = ['COUNT','FIRST','LAST','CONTAINS','INDEXOF','ADD','REMOVE'];
 
 function tokenizeLine(line) {
   const toks = [];
@@ -50,7 +47,6 @@ function parseParams(tokList) {
     else if (tokList[i].value === ')') { depth--; if (depth === 0 && start >= 0) { end = i; break; } }
   }
   if (start < 0 || end < 0) return params;
-  // split
   const groups = [];
   let cur = [], d = 0;
   for (let j = start; j < end; j++) {
@@ -62,7 +58,6 @@ function parseParams(tokList) {
   }
   if (cur.length) groups.push(cur);
   for (const g of groups) {
-    // name [AS type] or name:type
     const nameTok = g.find(t => t.type === 'ident');
     if (!nameTok) continue;
     let type = null;
@@ -74,24 +69,24 @@ function parseParams(tokList) {
 }
 
 function inferTypeFromTokens(toks) {
-  // returns type string or null
-  // check AS type
   const asIdx = toks.findIndex(t => t.value === 'AS' || t.value === ':');
   if (asIdx >= 0 && toks[asIdx+1] && toks[asIdx+1].type === 'ident') return toks[asIdx+1].value;
-  // literal
   const lit = toks.find(t => t.type === 'str');
   if (lit) return 'STRING';
   const num = toks.find(t => t.type === 'num');
-  if (num && !toks.find(t=>t.type==='ident' && t.value !== num.value)) {
-    // only number
-    if (toks.filter(t=>t.type==='ident').length === 0) return 'NUMBER';
-  }
+  if (num && toks.filter(t=>t.type==='ident').length === 0) return 'NUMBER';
   const id = toks.find(t => t.type === 'ident');
   if (id && (id.value === 'TRUE' || id.value === 'FALSE')) return 'BOOLEAN';
+  // VAR name TYPE pattern: second ident is the type (e.g. VAR s STRING)
+  const idents = toks.filter(t => t.type === 'ident');
+  if (idents.length >= 2) {
+    const candidate = idents[1].value;
+    if (['STRING','NUMBER','BOOLEAN','BOOL','OBJECT','ARRAY'].includes(candidate)) return candidate;
+  }
   return null;
 }
 
-function analyze(text, cursorOffset) {
+function locateCursor(text, cursorOffset) {
   const lines = text.split('\n');
   let off = 0, cursorLine = 0, cursorCol = 0;
   for (let i = 0; i < lines.length; i++) {
@@ -99,6 +94,11 @@ function analyze(text, cursorOffset) {
     off += lines[i].length + 1;
     if (i === lines.length - 1) { cursorLine = i; cursorCol = lines[i].length; }
   }
+  return { lines, cursorLine, cursorCol, off };
+}
+
+function analyze(text, cursorOffset) {
+  const { lines, cursorLine, cursorCol } = locateCursor(text, cursorOffset);
 
   const scopes = [];
   const global = { kind: 'global', symbols: new Map() };
@@ -130,10 +130,7 @@ function analyze(text, cursorOffset) {
     }
 
     if (first === 'VAR' || first === 'GLOBAL' || first === 'DIM') {
-      // parse comma-separated declarations
-      // collect toks after first until limit
       const declToks = toks.filter(t => t.start < limitCol).slice(1);
-      // split by comma at top level
       const groups = [];
       let cur = [], d = 0;
       for (const t of declToks) {
@@ -155,7 +152,6 @@ function analyze(text, cursorOffset) {
     }
   }
 
-  // collect visible
   const result = [];
   const seen = new Set();
   for (let i = scopes.length - 1; i >= 0; i--) {
@@ -169,49 +165,60 @@ function analyze(text, cursorOffset) {
   return result;
 }
 
-function getMemberCompletions(text, cursorOffset) {
-  // find receiver expression before dot
+function getAllFunctions(text) {
   const lines = text.split('\n');
-  let off = 0, cursorLine = 0, cursorCol = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if (off + lines[i].length + 1 > cursorOffset) { cursorLine = i; cursorCol = cursorOffset - off; break; }
-    off += lines[i].length + 1;
-    if (i === lines.length - 1) { cursorLine = i; cursorCol = lines[i].length; }
+  const funcs = new Map();
+  for (const line of lines) {
+    const toks = tokenizeLine(line);
+    const first = toks.length ? toks[0].value : '';
+    if (first === 'FUNCTION' || first === 'SUB') {
+      const nameTok = toks[1];
+      const name = nameTok ? nameTok.value : null;
+      const params = parseParams(toks);
+      if (name) funcs.set(name, { kind: 'function', name, params: params.map(p=>p.name), paramTypes: params });
+    }
   }
+  return funcs;
+}
+
+// Determine the type of the receiver expression before the last '.' on the cursor line.
+// Returns: null (no dot), 'STRING', 'NUMBER', 'BOOLEAN', 'NAMESPACE:<NS>', or a variable type string.
+function getReceiverType(text, cursorOffset) {
+  const { lines, cursorLine, cursorCol } = locateCursor(text, cursorOffset);
   const line = lines[cursorLine];
-  // text before cursor on this line
   const before = line.slice(0, cursorCol);
-  // find last dot
   const dotIdx = before.lastIndexOf('.');
-  if (dotIdx < 0) return [];
+  if (dotIdx < 0) return null;
   const expr = before.slice(0, dotIdx).trim();
-  // receiver identifier = last ident
-  const m = expr.match(/[A-Za-z_][A-Za-z0-9_]*$/);
-  if (!m) return [];
-  const recvName = m[0].toUpperCase();
-  // determine type
+  if (!expr) return null;
+
+  if (expr.startsWith('"') && expr.endsWith('"') && expr.length >= 2) return 'STRING';
+  if (/^\d+(\.\d+)?$/.test(expr)) return 'NUMBER';
+  if (expr === 'TRUE' || expr === 'FALSE') return 'BOOLEAN';
+  if (data.isNamespace(expr)) return 'NAMESPACE:' + expr.toUpperCase();
   const syms = analyze(text, cursorOffset);
-  const sym = syms.find(s => s.label === recvName);
-  let type = sym ? sym.type : null;
-  // if no type but name is string-ish? unknown -> no members
-  const members = membersForType(type);
-  if (!members) return [];
-  return members.map(mem => ({ label: mem, kind: 'function', detail: 'OSLANG member', insertText: mem }));
+  const sym = syms.find(s => s.label === expr.toUpperCase());
+  return sym ? sym.type : null;
 }
 
-function membersForType(type) {
-  if (!type) return null;
-  const t = type.toUpperCase();
-  if (t === 'STRING') return STRING_MEMBERS;
-  if (t === 'NUMBER') return NUMBER_MEMBERS;
-  if (t === 'BOOLEAN' || t === 'BOOL') return BOOLEAN_MEMBERS;
-  if (t === 'ARRAY' || t.startsWith('ARRAY')) return ARRAY_MEMBERS;
-  return null;
+// All members for a receiver type (no prefix filtering). Used by tests and internally.
+function getAllMembers(receiverType) {
+  if (!receiverType) return [];
+  if (receiverType.startsWith('NAMESPACE:')) {
+    const ns = receiverType.slice('NAMESPACE:'.length);
+    const members = data.getMembersForNamespace(ns);
+    return members ? members.map(m => ({ label: m.label, kind: m.kind, detail: m.detail, insertText: m.insertText, snippet: m.snippet })) : [];
+  }
+  const members = data.getMembersForType(receiverType);
+  return members ? members.map(m => ({ label: m.label, kind: m.kind, detail: m.detail, insertText: m.insertText, snippet: m.snippet })) : [];
 }
 
-function getSignatureHelp(text, cursorOffset) {
-  // find function name before '(' matching current open paren
-  // simple: scan backwards to find nearest unmatched '('
+function getMemberCompletions(text, cursorOffset) {
+  const receiverType = getReceiverType(text, cursorOffset);
+  return getAllMembers(receiverType);
+}
+
+function findCallAtCursor(text, cursorOffset) {
   const before = text.slice(0, cursorOffset);
   let depth = 0, i = before.length - 1;
   let start = -1;
@@ -224,11 +231,22 @@ function getSignatureHelp(text, cursorOffset) {
     }
   }
   if (start < 0) return null;
-  // function name before '('
-  const nameMatch = before.slice(0, start).match(/[A-Za-z_][A-Za-z0-9_]*\s*$/);
-  if (!nameMatch) return null;
-  const name = nameMatch[0].trim().toUpperCase();
-  // active param = count commas at depth 0 between start and cursor
+
+  let j = start - 1;
+  while (j >= 0 && (before[j] === ' ' || before[j] === '\t')) j--;
+  let nameEnd = j;
+  while (j >= 0 && (/[A-Za-z0-9_]/.test(before[j]) || before[j] === '.')) j--;
+  const name = before.slice(j + 1, nameEnd + 1);
+  if (!name) return null;
+
+  const dotIdx = name.indexOf('.');
+  if (dotIdx >= 0) {
+    return { start, name, namespace: name.slice(0, dotIdx).toUpperCase(), method: name.slice(dotIdx + 1).toUpperCase() };
+  }
+  return { start, name: name.toUpperCase(), namespace: null, method: null };
+}
+
+function countActiveParameter(text, start, cursorOffset) {
   let active = 0, d = 0;
   for (let j = start + 1; j < cursorOffset; j++) {
     const c = text[j];
@@ -236,25 +254,59 @@ function getSignatureHelp(text, cursorOffset) {
     else if (c === ')') d--;
     else if (c === ',' && d === 0) active++;
   }
-  // resolve function symbol
-  const syms = analyze(text, cursorOffset);
-  const sym = syms.find(s => s.label === name && s.kind === 'function');
-  let params = sym && sym.paramTypes ? sym.paramTypes : null;
-  // stdlib: no params known -> empty
-  if (!params) params = [];
-  const sigLabel = name + '(' + params.map(p => (p.name || '') + (p.type ? ' AS ' + p.type : '')).join(', ') + ')';
+  return active;
+}
+
+function getSignatureHelp(text, cursorOffset) {
+  const call = findCallAtCursor(text, cursorOffset);
+  if (!call) return null;
+
+  const active = countActiveParameter(text, call.start, cursorOffset);
+  let params = null;
+  let sigLabel = null;
+
+  if (call.namespace) {
+    const nsSig = data.getNamespaceSignature(call.namespace, call.method);
+    if (nsSig) {
+      params = nsSig;
+      sigLabel = call.namespace + '.' + call.method + '(' + params.map(p => p.label).join(', ') + ')';
+    }
+  } else {
+    const stdSig = data.getStdlibSignature(call.name);
+    if (stdSig) {
+      params = stdSig;
+      sigLabel = call.name + '(' + params.map(p => p.label).join(', ') + ')';
+    } else {
+      const funcs = getAllFunctions(text);
+      const sym = funcs.get(call.name);
+      if (sym && sym.paramTypes) {
+        params = sym.paramTypes.map(p => ({ label: p.name || '' }));
+        sigLabel = call.name + '(' + params.map(p => p.label).join(', ') + ')';
+      }
+    }
+  }
+
+  if (!sigLabel) return null;
+
   return {
-    signatures: [{ label: sigLabel, parameters: params.map(p => ({ label: p.name || '' })) }],
+    signatures: [{ label: sigLabel, parameters: params.map(p => ({ label: p.label })) }],
     activeSignature: 0,
-    activeParameter: active
+    activeParameter: Math.min(active, params.length - 1)
   };
 }
 
 function getContextCompletions(text, cursorOffset) {
   try {
-    const before = text.slice(0, cursorOffset);
-    if (before.trimEnd().endsWith('.')) {
-      return getMemberCompletions(text, cursorOffset);
+    const { lines, cursorLine, cursorCol } = locateCursor(text, cursorOffset);
+    const line = lines[cursorLine];
+    const before = line.slice(0, cursorCol);
+    const dotIdx = before.lastIndexOf('.');
+    if (dotIdx >= 0) {
+      const prefix = before.slice(dotIdx + 1).toUpperCase();
+      const receiverType = getReceiverType(text, cursorOffset);
+      if (!receiverType) return [];
+      const members = getAllMembers(receiverType);
+      return members.filter(m => !prefix || m.label.startsWith(prefix));
     }
     return analyze(text, cursorOffset);
   } catch (e) {
@@ -262,4 +314,4 @@ function getContextCompletions(text, cursorOffset) {
   }
 }
 
-module.exports = { tokenizeLine, analyze, getContextCompletions, parseParams, getMemberCompletions, getSignatureHelp, membersForType };
+module.exports = { tokenizeLine, analyze, getContextCompletions, parseParams, getMemberCompletions, getSignatureHelp, getReceiverType, getAllFunctions, getAllMembers };

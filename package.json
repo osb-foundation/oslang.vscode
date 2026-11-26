@@ -52,7 +52,7 @@
     "url": "https://github.com/ygorlazaro/osb-dotnet/issues"
   },
   "scripts": {
-    "test": "node test/tokenize.js && node test/completion.js && node test/context.js",
+    "test": "node test/tokenize.js && node test/completion.js && node test/context.js && node test/members.js",
     "package": "vsce package"
   },
   "devDependencies": {
