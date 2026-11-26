@@ -50,6 +50,10 @@ project.assets.json
 *.nuget.props
 *.nuget.targets
 
+# VS Code extension (this directory)
+node_modules/
+*.vsix
+
 # Build output
 publish/
 out/
