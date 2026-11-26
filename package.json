@@ -37,7 +37,8 @@
         "scopeName": "source.oslang",
         "path": "./syntaxes/oslang.tmLanguage.json"
       }
-    ]
+    ],
+    "completionProvider": []
   },
   "author": {
     "name": "OSB Project"
@@ -51,12 +52,16 @@
     "url": "https://github.com/ygorlazaro/osb-dotnet/issues"
   },
   "scripts": {
-    "test": "node test/tokenize.js",
+    "test": "node test/tokenize.js && node test/completion.js",
     "package": "vsce package"
   },
   "devDependencies": {
     "@vscode/vsce": "^4.1.1",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^7.0.4"
-  }
+  },
+  "main": "extension.js",
+  "activationEvents": [
+    "onLanguage:oslang"
+  ]
 }
