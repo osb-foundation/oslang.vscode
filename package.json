@@ -1,10 +1,11 @@
 {
   "name": "oslang",
-  "displayName": "OSLANG 0.62",
-  "description": "Syntax highlighting, intellisense, and language support for OSLANG 0.62, the scripting language of OSB 3.0 Lince",
-  "version": "1.2.0",
+  "displayName": "OSLANG",
+  "description": "Syntax highlighting, editor configuration, and language support for OSLANG 0.8, the scripting language of OSB. Visual Studio Code and VSCodium.",
+  "version": "0.1.0",
+  "publisher": "osb-foundation",
   "engines": {
-    "vscode": "^1.0.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Programming Languages"
@@ -13,14 +14,9 @@
     "oslang",
     "osb",
     "scripting",
-    "basic",
-    "oop",
-    "intellisense"
+    "syntax-highlighting",
+    "language-support"
   ],
-  "activationEvents": [
-    "onLanguage:oslang"
-  ],
-  "main": "./extension.js",
   "contributes": {
     "languages": [
       {
@@ -30,8 +26,7 @@
           "oslang"
         ],
         "extensions": [
-          ".osl",
-          ".oslang"
+          ".osl"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -42,20 +37,26 @@
         "scopeName": "source.oslang",
         "path": "./syntaxes/oslang.tmLanguage.json"
       }
-    ],
-    "snippets": [
-      {
-        "language": "oslang",
-        "path": "./snippets/oslang.code-snippets"
-      }
     ]
   },
   "author": {
-    "name": "Ygor Lázaro"
+    "name": "OSB Project"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ygorlazaro/osb-dotnet"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ygorlazaro/osb-dotnet/issues"
+  },
+  "scripts": {
+    "test": "node test/tokenize.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^4.1.1",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^7.0.4"
+  }
 }

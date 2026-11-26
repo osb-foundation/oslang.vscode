@@ -1,133 +1,112 @@
-# OSLANG 0.62 - VS Code Extension
+# OSLANG - VS Code / VSCodium Extension
 
-Syntax highlighting, intellisense, and language support for **OSLANG 0.62**, the scripting language of **OSB 3.0 Lince**.
+Syntax highlighting and editor configuration for **OSLANG 0.8**, the scripting language of OSB, in Visual Studio Code and VSCodium.
+
+## Scope
+
+This extension provides **language recognition, editor configuration, and syntax highlighting only**:
+
+- Automatic file association for `.osl` files (language id: `oslang`)
+- Syntax highlighting based on the OSLANG 0.8 lexical grammar (keywords, types, operators, numeric/string/date-time literals, booleans, null, comments)
+- Editor configuration: line and block comments, brackets, auto-closing/surrounding pairs, indentation rules
+
+It deliberately does **not** provide autocomplete/IntelliSense, hover, signature help, document symbols, folding, a language server, a parser, compilation, execution, diagnostics, or a debugger. Those features belong to other roadmap cards.
+
+## Supported language version
+
+OSLANG 0.8 (syntax preserved from OSLANG 0.73; OSLANG 0.8 introduces no syntax changes). File extension: `.osl`.
+
+The extension's own version (`0.1.0`) is independent of the OSLANG language version.
 
 ## Features
 
-- **Syntax Highlighting** for `.osl` and `.oslang` files with:
-  - Keywords, types, numbers, strings, comments
-  - Operators (arithmetic, comparison, logical, arrow `=>`)
-  - Method calls (MATH, STRING, ARRAY, I18N, FILE, DIR, DATE builtins)
-  - Punctuation `()`, `[]`, `{}`, `,`, `.`, `:`
-  - String interpolation `${...}` with nested syntax highlighting
-  - Enum sets with `|`
-- **IntelliSense** — context-aware autocompletion:
-  - All OSLANG keywords and built-in functions
-  - Classes, interfaces, functions, methods, variables, and enums from the current document
-  - Context-aware method suggestions (`MATH.`, `STRING.`, `ARRAY.`, `I18N.`, `FILE.`, `DIR.`, `DATE.`)
-- **Hover** — inline documentation for 60+ keywords and built-in functions
-- **Signature Help** — parameter hints for functions with multiple overloads
-- **Document Symbols** — outline view showing classes, interfaces, functions, enums, methods, and properties
-- **Code Folding** — fold blocks for `CLASS`, `INTERFACE`, `FUNCTION`, `CONSTRUCTOR`, `TRY`, `IF`, `FOR`, `WHILE`, `DO`, `SWITCH`, `ENUM`
-- **Snippets** — 40+ code snippets including:
-  - `enum` — ENUM declaration
-  - `enumset` — EnumSet with `|`
-  - `arrow` / `arrowblock` — Arrow functions
-  - `foreach` / `foreachmethod` — For-each loops
-  - `dowhile` — Do-while loop
-  - `elif` — Else-if block
-  - `interp` — String interpolation
-  - `math` — MATH function call
-  - `i18nget` / `i18nlang` — I18N helpers
-  - `fileread` / `dirlist` / `datenow` — FILE/DIR/DATE helpers
-  - `tryraise` — Try-catch with error printing
-  - `import` — USING statement
-  - `global` — GLOBAL variable
-  - `arr` / `arrforeach` — Array literal and foreach
-- **Bracket Matching** and **Auto-Closing** for `()`, `[]`, `{}`, `""`, `''`
-- **Indentation Rules** — automatic indentation for OSLANG blocks
+### Syntax highlighting (`source.oslang`)
 
-## OSLANG 0.62 Keywords
+- Keywords and reserved words (case-insensitive, e.g. `FUNCTION`, `IF`, `THEN`, `END`, `VAR`, `CLASS`, `ENUM`, `USING`, `TRY`, `CATCH`, `SWITCH`, `CASE`, `DEFAULT`, `FOR`, `WHILE`, `DO`, ...)
+- Declaration keywords (`FUNCTION`, `CLASS`, `INTERFACE`, `ENUM`, `VAR`, `GLOBAL`, ...)
+- Modifiers (`PUBLIC`, `PRIVATE`, `PROTECTED`, `VIRTUAL`, `OVERRIDE`)
+- Types (`NUMBER`, `STRING`, `BOOLEAN`, `BOOL`, `OBJECT`)
+- Constants (`TRUE`, `FALSE`, `NULL`)
+- Operators (`+ - * / % ** ++ -- += => -> == <> <= >= < > = | MOD`, and logical `AND`/`OR`/`NOT`)
+- Punctuation `( ) [ ] { } , : .`
+- Numeric literals (`42`, `3.14`)
+- Date/time literals (`#2026-11-26#`, `#14:30:45#`)
+- Strings (`"..."`) with `""` escaped quotes and `\n`, `\t`, `\\`, `\"` escapes
+- Comments: `'` line comments, `REM` line comments, `/* ... */` block comments
+- Identifiers and dotted namespace access (`OSL.CONSOLE.WRITE(...)`)
 
-- **Data/Network Namespaces:** `JSON`, `CSV`, `XML`, `CNF`, `OSB`, `NET`
-- **Control Flow:** `AND`, `BREAK`, `CONTINUE`, `DO`, `ELIF`, `ELSE`, `END`, `FOR`, `IF`, `NOT`, `OR`, `RETURN`, `STEP`, `THEN`, `TO`, `WHILE`, `TRY`, `CATCH`, `SWITCH`, `CASE`, `DEFAULT`, `ON`, `RAISE`
-- **Declarations:** `CONSTRUCTOR`, `FUNCTION`, `CLASS`, `INTERFACE`, `VAR`, `GLOBAL`, `USING`, `EVENT`, `ENUM`
-- **Other:** `BASE`, `ME`, `NEW`, `PRINT`, `INPUT`, `CLEAR`, `CLS`, `VIRTUAL`, `OVERRIDE`, `KISS`, `TYPE`, `MATH`, `FILE`, `DIR`, `DATE`, `TIME`, `SHOW`, `MOD`, `TYPEOF`, `SQRT`, `POW`, `FLOOR`, `CEIL`, `COUNT`, `STR`, `BOOL`, `NUMBER`, `STRING`, `BOOLEAN`, `ARRAY`, `OBJECT`, `NULL`, `TRUE`, `FALSE`, `OSL`, `OSB`
-- **Modifiers:** `PUBLIC`, `PRIVATE`, `PROTECTED`, `STATIC`
+### Editor configuration
 
-## Built-in Functions
+- Comments: line `'`, block `/* */`
+- Brackets: `( )`, `[ ]`, `{ }`
+- Auto-closing and surrounding pairs for `'`, `"`, `( )`, `[ ]`, `{ }`
+- Indentation rules: blocks opened by `CLASS`, `INTERFACE`, `FUNCTION`, `CONSTRUCTOR`, `IF`, `ELIF`, `ELSE`, `FOR`, `WHILE`, `DO`, `TRY`, `CATCH`, `SWITCH`, `CASE`, `DEFAULT`, `ENUM` increase indentation; `END` decreases it
 
-- **MATH:** `SQRT`, `POW`, `FLOOR`, `CEIL`, `ABS`, `SIN`, `COS`, `TAN`, `PI`, `RANDOM`, `MAX`, `MIN`
-- **STRING:** `LENGTH`, `TOUPPER`, `TOLOWER`, `TRIM`, `SUBSTR`, `CONTAINS`, `REVERSE`, `NORMALIZE`, `REPEAT`, `PADSTART`, `PADEND`
-- **ARRAY:** `COUNT`, `FIRST`, `LAST`, `SORT`, `JOIN`, `INDEXOF`, `REMOVE`, `FLAT`, `PUSH`, `POP`, `FINDINDEX`
-- **I18N:** `GET`, `HAS`, `KEYS`, `LANGUAGE`, `SETLANGUAGE`, `LANGUAGES`, `LOAD`, `LOADLANGUAGE`, `RELOAD`, `UNLOAD`, `DEFAULT`, `SETDEFAULT`, `SETFALLBACK`
-- **FILE:** `EXISTS`, `READ`, `WRITE`, `APPEND`, `DELETE`, `LIST`, `FILES`, `DIRS`, `CREATE`
-- **DIR:** `EXISTS`, `LIST`, `FILES`, `DIRS`, `CREATE`, `DELETE`, `CURRENT`
-- **DATE:** `NOW`, `YEAR`, `MONTH`, `DAY`, `HOUR`, `MINUTE`, `SECOND`, `WEEKDAY`, `FORMAT`
-- **OSL.JSON:** `PARSE`, `STRINGIFY`, `PRETTY`, `READ`, `WRITE`
-- **OSL.CSV:** `PARSE`, `STRINGIFY`, `READ`, `WRITE`
-- **OSL.XML:** `PARSE`, `STRINGIFY`, `READ`, `WRITE`, `NAME`, `VALUE`, `ATTRIBUTES`, `CHILDREN`, `CHILD`, `HAS`
-- **OSL.CNF:** `READ`, `WRITE`, `GET`, `SET`, `HAS`, `DELETE`, `KEYS`, `SAVE`
-- **OSB.NET:** `PING`, `DOWN`
-- **Conversion:** `STR`, `NUMBER`, `BOOL`, `TYPEOF`, `TRUNC`
+## Installation from the local VSIX
 
-## Installation
+1. Obtain the VSIX (see "Building" below), e.g. `oslang-0.1.0.vsix`.
+2. Install it into an isolated editor profile so it does not interfere with your existing extensions:
 
-1. Copy the `oslang-vscode` folder to your VS Code extensions directory:
-   - Linux/macOS: `~/.vscode/extensions/oslang-vscode/`
-   - Windows: `%USERPROFILE%\.vscode\extensions\oslang-vscode\`
-
-2. Or install from VSIX:
+   Visual Studio Code:
    ```bash
-   code --install-extension oslang-vscode/oslang-0.61.vsix
+   code --install-extension oslang-0.1.0.vsix --user-data-dir /tmp/kilo/vscode-oslang
    ```
 
-## Manual Testing
+   VSCodium:
+   ```bash
+   codium --install-extension oslang-0.1.0.vsix --user-data-dir /tmp/kilo/vscodium-oslang
+   ```
+3. Open or create a `.osl` file. The OSLANG language mode activates automatically and syntax highlighting applies.
 
-1. Open VS Code
-2. Create or open a file with `.osl` or `.oslang` extension
-3. The syntax highlighting should activate automatically
+### Updating
 
-Example OSLANG 0.61 code:
+Uninstall the previous version, then install the new VSIX with the same `--install-extension` command. The extension version (`0.1.0`) is independent of the OSLANG language version (0.8).
 
-```osl
-USING OSL.I18N
+## Supported editors
 
-ENUM Color
-    RED
-    GREEN
-    BLUE
-END
+- Visual Studio Code (engine `^1.80.0` declared in package.json)
+- VSCodium (validated with VSCodium 1.143.x in this environment)
 
-FUNCTION MAIN()
-    Favorite = Color.BLUE
+Visual Studio Code was not available in the validation environment; only VSCodium was installed and tested.
 
-    SWITCH Favorite
-        CASE Color.RED
-            PRINT "Red"
-        CASE Color.BLUE
-            PRINT "Blue"
-        DEFAULT
-            PRINT "Other"
-    END
+## Building and testing
 
-    Message = "Favorite color is ${Favorite.NAME()}"
-    PRINT Message
-END FUNCTION
+Prerequisites: Node.js (v24 used for validation) and npm.
+
+```bash
+# Install locked development dependencies (test tooling + vsce packager)
+npm install
+
+# Run the TextMate tokenization tests
+npm test
+
+# Package the VSIX
+npm run package   # i.e. vsce package
 ```
 
-## Samples
+Output: `oslang-0.1.0.vsix` in the project root.
 
-Multi-file OSLANG 0.61 examples are available in the `Samples/03-MultiFile/` directory of the OSB repository:
+## Reproducible VSIX packaging
 
-- `Main.osl` - Entry point demonstrating USING and SWITCH expression
-- `Person.osl` - Class with constructor and methods
-- `Math.osl` - Utility functions across modules
+The VSIX is produced with `vsce package` from a clean working tree. `.vscodeignore` excludes `node_modules`, `test`, `package-lock.json`, git metadata, and other repository-only material so the package contains only `package.json`, `language-configuration.json`, `syntaxes/oslang.tmLanguage.json`, `README.md`, `LICENSE`, and `CHANGELOG.md`.
 
-Additional OSLANG examples in `src/Osb.Shell/`:
+Because ZIP archive timestamps are set by the packager at build time, byte-for-byte reproducibility across runs is not guaranteed by the tooling; package contents and manifest metadata were compared across repeated builds (see the Kilo session report).
 
-- `Animal.osl` - Class inheritance with BASE and ME
-- `HelloWorld.osl` - Basic program with I18N
-- `ShellExtensions.osl` - FILE, DIR, DATE, I18N usage
-- `Fibonacci.osl` - Recursive function example
+## Publisher note
 
-## Language Reference
+The publisher id declared in the local VSIX is `osb-foundation`. A publisher id in a locally installed VSIX does not prove Marketplace registration or verification. The extension has not been published to any Marketplace.
 
-For the complete OSLANG 0.61 specification, see:
-- `src/Osb.Lang/OSLANG-0.61-SPEC.md` in the OSB repository
-- Or use `HELP OSL` in OSB Shell
-- Or `OSL /?` to open the spec in KISS
+## Known limitations
+
+- OSLANG keywords are case-insensitive reserved words; an identifier that collides with a keyword (e.g. a variable named `count`, since `COUNT` is a reserved word) is highlighted as the keyword. This matches the language's lexical behavior and cannot be resolved by highlighting alone.
+- String interpolation `${...}` is not part of OSLANG 0.8 and receives no special highlighting; `${` outside strings is not classified.
+- Date/time literals are highlighted only for the `#YYYY-MM-DD#` and `#HH:MM:SS#` forms; malformed `#...#` constructs receive no special classification.
+- Highlighting is lexical (TextMate) only; it is not semantic validation.
 
 ## Repository
 
 https://github.com/ygorlazaro/osb-dotnet
+
+## License
+
+MIT (see LICENSE).
